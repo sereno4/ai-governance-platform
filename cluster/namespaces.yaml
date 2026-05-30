@@ -1,0 +1,34 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-mlops
+  labels:
+    team: mlops
+    environment: production
+    ai-governance/tier: privileged
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-research
+  labels:
+    team: research
+    environment: staging
+    ai-governance/tier: standard
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-dev
+  labels:
+    team: dev
+    environment: dev
+    ai-governance/tier: restricted
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-governance-system
+  labels:
+    app.kubernetes.io/managed-by: kyverno

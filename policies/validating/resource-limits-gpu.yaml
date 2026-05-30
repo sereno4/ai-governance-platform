@@ -1,0 +1,35 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-gpu-limits
+  annotations:
+    policies.kyverno.io/title: "Resource Limits — Exigir limits em containers GPU"
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/category: Resource Management
+spec:
+  failurePolicy: Fail
+  validationActions: [Deny]
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["apps"]
+        apiVersions: ["v1"]
+        resources: ["deployments", "statefulsets"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: containers
+      expression: "request.object.spec.template.spec.containers"
+  validations:
+    - expression: >
+        !variables.containers.exists(c,
+          has(c.resources) &&
+          has(c.resources.requests) &&
+          'nvidia.com/gpu' in c.resources.requests &&
+          (
+            !has(c.resources.limits) ||
+            !('nvidia.com/gpu' in c.resources.limits)
+          )
+        )
+      message: >
+        Resource violation: todo container que solicita nvidia.com/gpu deve
+        declarar limits.nvidia.com/gpu explicitamente. Sem limits o scheduler
+        nao consegue garantir isolamento entre tenants.

@@ -1,0 +1,65 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: inject-c2pa-validator
+  annotations:
+    policies.kyverno.io/title: "Zero Trust: Validar Proveniência do Modelo (C2PA)"
+    policies.kyverno.io/category: "Supply Chain Security"
+    policies.kyverno.io/severity: critical
+    policies.kyverno.io/description: >
+      Injeta um Init Container que valida a assinatura C2PA do modelo
+      antes de permitir o Pod subir. Se o modelo foi alterado (tampering),
+      o Init Container falha e o Pod é bloqueado. Garante que apenas
+      modelos assinados pelo pipeline de CI/CD rodem em produção.
+spec:
+  background: false
+  rules:
+    - name: inject-c2pa-init-container
+      match:
+        resources:
+          kinds:
+            - Deployment
+            - StatefulSet
+          selector:
+            matchLabels:
+              ai-governance/verify-model: "enabled"
+      mutate:
+        patchStrategicMerge:
+          spec:
+            template:
+              spec:
+                initContainers:
+                  - name: c2pa-validator
+                    image: projectxai/c2pa-validator:latest
+                    env:
+                      - name: MODEL_STORAGE_URL
+                        value: "{{request.object.metadata.annotations.\"model-storage-url\" || \"s3://models-bucket/default\"}}"
+                      - name: MODEL_FILE
+                        value: "{{request.object.metadata.annotations.\"model-file\" || \"model.safetensors\"}}"
+                      - name: C2PA_SIGNATURE_FILE
+                        value: "{{request.object.metadata.annotations.\"c2pa-signature\" || \"model.c2pa\"}}"
+                      - name: STRICT_MODE
+                        value: "true"
+                      - name: FAIL_ON_MISSING
+                        value: "true"
+                    volumeMounts:
+                      - name: model-storage
+                        mountPath: /models
+                    resources:
+                      requests:
+                        cpu: "100m"
+                        memory: "128Mi"
+                      limits:
+                        cpu: "500m"
+                        memory: "256Mi"
+                    securityContext:
+                      readOnlyRootFilesystem: true
+                      allowPrivilegeEscalation: false
+                      runAsNonRoot: true
+                      runAsUser: 1000
+                      capabilities:
+                        drop:
+                          - ALL
+                volumes:
+                  - name: model-storage
+                    emptyDir: {}

@@ -1,0 +1,30 @@
+# DEVE SER BLOQUEADO: namespace dev + 8 GPUs + gpu-tier=premium
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-abusive
+  namespace: team-dev
+  labels:
+    app.kubernetes.io/name: vllm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm-abusive
+  template:
+    metadata:
+      labels:
+        app: vllm-abusive
+    spec:
+      nodeSelector:
+        gpu-tier: premium        # H100 — PROIBIDO em dev
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:latest
+          resources:
+            requests:
+              nvidia.com/gpu: "8" # > 4 — PROIBIDO em dev/staging
+              memory: "80Gi"
+              cpu: "16"
+            limits:
+              nvidia.com/gpu: "8"

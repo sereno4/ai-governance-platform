@@ -1,0 +1,34 @@
+# DEVE PASSAR: production + gpu-tier=standard + limits OK
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-standard
+  namespace: team-mlops
+  labels:
+    app.kubernetes.io/name: vllm
+    app.kubernetes.io/component: inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm-standard
+  template:
+    metadata:
+      labels:
+        app: vllm-standard
+        ai-governance/cache: "enabled"
+    spec:
+      nodeSelector:
+        gpu-tier: standard
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:latest
+          resources:
+            requests:
+              nvidia.com/gpu: "2"
+              memory: "16Gi"
+              cpu: "4"
+            limits:
+              nvidia.com/gpu: "2"
+              memory: "32Gi"
+              cpu: "8"

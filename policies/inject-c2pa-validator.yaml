@@ -1,0 +1,54 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: inject-c2pa-validator
+  annotations:
+    policies.kyverno.io/title: "C2PA + SLSA Model Provenance Validator"
+    policies.kyverno.io/description: >
+      Injeta init container que valida C2PA hash + SLSA provenance
+      + assinatura Cosign antes de permitir que o pod de inferência suba.
+spec:
+  rules:
+    - name: inject-init-container
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaces: ["team-mlops"]
+              selector:
+                matchLabels:
+                  c2pa-validation: "required"
+      mutate:
+        patchStrategicMerge:
+          spec:
+            volumes:
+              - name: cosign-pub-key
+                configMap:
+                  name: cosign-pub-key
+            initContainers:
+              - name: c2pa-validator
+                image: c2pa-validator:latest
+                imagePullPolicy: Never
+                env:
+                  - name: MINIO_ENDPOINT
+                    value: "http://minio.minio.svc.cluster.local:9000"
+                  - name: MINIO_ACCESS_KEY
+                    value: "minioadmin"
+                  - name: MINIO_SECRET_KEY
+                    value: "minioadmin"
+                  - name: MODEL_BUCKET
+                    value: "models"
+                  - name: MODEL_KEY
+                    value: "model.safetensors"
+                  - name: MANIFEST_KEY
+                    value: "model.c2pa.json"
+                  - name: PROVENANCE_KEY
+                    value: "model.slsa-provenance.json"
+                  - name: SIGNATURE_KEY
+                    value: "model.slsa-provenance.sig"
+                  - name: COSIGN_PUB_KEY
+                    value: "/cosign/cosign.pub"
+                volumeMounts:
+                  - name: cosign-pub-key
+                    mountPath: /cosign
+                    readOnly: true

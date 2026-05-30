@@ -1,0 +1,56 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: inject-gptcache-sidecar
+  annotations:
+    policies.kyverno.io/title: "FinOps Auto — Injetar GPTCache em workloads vLLM"
+    policies.kyverno.io/category: FinOps
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >
+      Intercepta deploys com label app.kubernetes.io/name=vllm e injeta
+      automaticamente um sidecar de cache semantico (GPTCache + Redis).
+      Economia estimada: 40-60% de chamadas GPU sem alteracao no codigo.
+spec:
+  background: false
+  rules:
+    - name: inject-gptcache
+      match:
+        resources:
+          kinds:
+            - Deployment
+            - StatefulSet
+      preconditions:
+        all:
+          - key: "{{request.object.metadata.labels.\"app.kubernetes.io/name\" || ''}}"
+            operator: Equals
+            value: "vllm"
+          - key: "{{request.object.metadata.labels.\"ai-governance/cache\" || ''}}"
+            operator: Equals
+            value: "enabled"
+      mutate:
+        patchStrategicMerge:
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: gptcache-sidecar
+                    image: zilliz/gptcache:latest
+                    env:
+                      - name: REDIS_URL
+                        value: "redis://redis-cache.gptcache.svc.cluster.local:6379"
+                      - name: SIMILARITY_THRESHOLD
+                        value: "0.85"
+                      - name: CACHE_MAX_SIZE_MB
+                        value: "2048"
+                      - name: LOG_LEVEL
+                        value: "info"
+                    ports:
+                      - containerPort: 8001
+                        name: cache-api
+                    resources:
+                      requests:
+                        cpu: "100m"
+                        memory: "256Mi"
+                      limits:
+                        cpu: "500m"
+                        memory: "512Mi"

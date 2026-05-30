@@ -1,0 +1,92 @@
+# DEPLOY SEGURO: C2PA + GPTCache + FinOps
+# Este deploy passa por TODAS as camadas de governança
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-secure-inference
+  namespace: team-mlops
+  labels:
+    app.kubernetes.io/name: vllm
+    ai-governance/cache: "enabled"
+    ai-governance/verify-model: "enabled"
+  annotations:
+    model-storage-url: "s3://company-models/llama-3-70b"
+    model-file: "model.safetensors"
+    c2pa-signature: "model.safetensors.c2pa"
+    model-version: "v2.1.0"
+    trained-by: "team-mlops"
+    training-date: "2026-05-15"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vllm-secure-inference
+  template:
+    metadata:
+      labels:
+        app: vllm-secure-inference
+        app.kubernetes.io/name: vllm
+        ai-governance/cache: "enabled"
+        ai-governance/verify-model: "enabled"
+    spec:
+      nodeSelector:
+        gpu-tier: standard
+      # Init Container 1: Valida proveniência C2PA do modelo
+      # (injetado automaticamente pelo Kyverno)
+      #
+      # Init Container 2: Download do modelo (opcional, se não estiver no PVC)
+      initContainers:
+        - name: model-downloader
+          image: amazon/aws-cli:latest
+          command:
+            - sh
+            - -c
+            - |
+              echo "Downloading model from S3..."
+              aws s3 cp s3://company-models/llama-3-70b/model.safetensors /models/
+              aws s3 cp s3://company-models/llama-3-70b/model.safetensors.c2pa /models/
+              echo "Download complete. C2PA validator will verify next."
+          volumeMounts:
+            - name: model-storage
+              mountPath: /models
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:latest
+          args:
+            - --model
+            - /models/model.safetensors
+            - --tensor-parallel-size
+            - "2"
+          resources:
+            limits:
+              nvidia.com/gpu: "2"
+              memory: "80Gi"
+            requests:
+              nvidia.com/gpu: "2"
+              memory: "80Gi"
+          volumeMounts:
+            - name: model-storage
+              mountPath: /models
+          ports:
+            - containerPort: 8000
+              name: http
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 5
+      volumes:
+        - name: model-storage
+          emptyDir:
+            sizeLimit: 100Gi

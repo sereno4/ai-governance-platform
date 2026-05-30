@@ -1,0 +1,47 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: finops-block-premium-gpu
+  annotations:
+    policies.kyverno.io/title: "FinOps — Bloquear GPUs premium em dev/staging"
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/category: FinOps
+spec:
+  failurePolicy: Fail
+  validationActions: [Deny]
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+        - key: environment
+          operator: In
+          values: [dev, staging]
+    resourceRules:
+      - apiGroups: ["apps"]
+        apiVersions: ["v1"]
+        resources: ["deployments", "statefulsets"]
+        operations: ["CREATE", "UPDATE"]
+  variables:
+    - name: containers
+      expression: "request.object.spec.template.spec.containers"
+    - name: nodeSelector
+      expression: >
+        has(request.object.spec.template.spec.nodeSelector)
+        ? request.object.spec.template.spec.nodeSelector
+        : {}
+  validations:
+    - expression: >
+        !variables.containers.exists(c,
+          has(c.resources) &&
+          has(c.resources.requests) &&
+          'nvidia.com/gpu' in c.resources.requests &&
+          int(c.resources.requests['nvidia.com/gpu']) > 4
+        )
+      message: >
+        FinOps violation: dev/staging nao podem solicitar mais de 4 GPUs por
+        container. Limite: 4. Use gpu-tier=standard (A100) ou fracoes MIG.
+    - expression: >
+        !('gpu-tier' in variables.nodeSelector) ||
+        variables.nodeSelector['gpu-tier'] != 'premium'
+      message: >
+        FinOps violation: nodeSelector gpu-tier=premium proibido em dev/staging.
+        Use gpu-tier=standard.

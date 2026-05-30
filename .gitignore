@@ -1,0 +1,3 @@
+slsa/cosign.key
+slsa/*.key
+*.bundle

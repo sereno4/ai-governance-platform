@@ -1,0 +1,77 @@
+customRules:
+  ai-governance-rules.yaml: |-
+    # ── REGRA 1: Acesso não autorizado ao modelo em runtime ──────────
+    - rule: AI Model File Unauthorized Access
+      desc: >
+        Detecta leitura ou escrita em arquivos de modelo (.safetensors, .bin, .gguf)
+        por processos que não sejam o validador C2PA ou o servidor de inferência.
+      condition: >
+        (open_read or open_write) and
+        (fd.name contains ".safetensors" or
+         fd.name contains ".bin" or
+         fd.name contains ".gguf" or
+         fd.name contains "model.c2pa.json" or
+         fd.name contains "slsa-provenance") and
+        not proc.name in (python3, python, vllm, c2pa-validator) and
+        not container.image.repository contains "c2pa-validator" and
+        container.id != host
+      output: >
+        🚨 ALERTA AI-GOV: Acesso não autorizado ao modelo
+        (proc=%proc.name pid=%proc.pid user=%user.name
+         file=%fd.name container=%container.name
+         image=%container.image.repository ns=%k8s.ns.name
+         pod=%k8s.pod.name)
+      priority: CRITICAL
+      tags: [ai-governance, model-security, c2pa]
+
+    # ── REGRA 2: Processo suspeito no container de inferência ─────────
+    - rule: AI Inference Container Suspicious Process
+      desc: >
+        Detecta execução de processos inesperados dentro de containers
+        de inferência (shells, ferramentas de rede, compiladores).
+      condition: >
+        spawned_process and
+        k8s.ns.name = "team-mlops" and
+        (proc.name in (sh, bash, zsh, curl, wget, nc, ncat, netcat,
+                       nmap, gcc, python3, pip, apt, apt-get, yum) or
+         proc.cmdline contains "chmod +x" or
+         proc.cmdline contains "base64 -d" or
+         proc.cmdline contains "/tmp/" ) and
+        not proc.pname in (vllm, gunicorn, uvicorn, python3) and
+        container.id != host
+      output: >
+        🚨 ALERTA AI-GOV: Processo suspeito em container de inferência
+        (proc=%proc.name cmdline=%proc.cmdline pid=%proc.pid
+         parent=%proc.pname user=%user.name
+         container=%container.name ns=%k8s.ns.name
+         pod=%k8s.pod.name)
+      priority: WARNING
+      tags: [ai-governance, runtime-security, suspicious-process]
+
+    # ── REGRA 3: Exfiltração — conexão de rede inesperada ─────────────
+    - rule: AI Model Exfiltration Attempt
+      desc: >
+        Detecta conexões de rede de saída inesperadas a partir de containers
+        de inferência — possível tentativa de exfiltração de pesos do modelo.
+      condition: >
+        outbound and
+        k8s.ns.name = "team-mlops" and
+        not fd.sip in (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) and
+        not fd.sport in (443, 80, 9000, 8080, 8000) and
+        not proc.name in (python3, vllm, gunicorn) and
+        container.id != host
+      output: >
+        🚨 ALERTA AI-GOV: Possível exfiltração de modelo detectada
+        (proc=%proc.name pid=%proc.pid
+         dest=%fd.rip:%fd.rport proto=%fd.l4proto
+         container=%container.name ns=%k8s.ns.name
+         pod=%k8s.pod.name)
+      priority: CRITICAL
+      tags: [ai-governance, exfiltration, network-security]
+
+    # ── MACRO auxiliar ────────────────────────────────────────────────
+    - macro: open_read
+      condition: (evt.type in (open, openat, openat2) and evt.is_open_read=true and fd.typechar='f')
+
+    - macro: open_write
+      condition: (evt.type in (open, openat, openat2) and evt.is_open_write=true and fd.typechar='f')

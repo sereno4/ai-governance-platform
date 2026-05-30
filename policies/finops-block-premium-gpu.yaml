@@ -1,0 +1,58 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: finops-block-premium-gpu
+  annotations:
+    policies.kyverno.io/category: FinOps
+    policies.kyverno.io/title: "FinOps — Bloquear GPU premium em dev/staging"
+    policies.kyverno.io/description: >
+      Bloqueia pods em dev/staging que solicitam mais de 4 GPUs
+      ou que usam nodeSelector gpu-tier=premium.
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: block-excessive-gpu
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaces: ["team-mlops"]
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.nodeSelector.env || '' }}"
+            operator: AnyIn
+            value: ["dev", "staging"]
+      validate:
+        message: >
+          FinOps violation: dev/staging nao podem solicitar mais de 4 GPUs
+          por container. Limite: 4. Use gpu-tier=standard (A100) ou fracoes MIG.
+        foreach:
+          - list: "request.object.spec.containers"
+            deny:
+              conditions:
+                any:
+                  - key: "{{ element.resources.limits.\"nvidia.com/gpu\" || '0' }}"
+                    operator: GreaterThan
+                    value: "4"
+
+    - name: block-premium-node-selector
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaces: ["team-mlops"]
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.nodeSelector.env || '' }}"
+            operator: AnyIn
+            value: ["dev", "staging"]
+      validate:
+        message: >
+          FinOps violation: nodeSelector gpu-tier=premium proibido em dev/staging.
+          Use gpu-tier=standard.
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.spec.nodeSelector.\"gpu-tier\" || '' }}"
+                operator: Equals
+                value: "premium"
