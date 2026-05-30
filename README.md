@@ -1,258 +1,295 @@
-````markdown
-<div align="center">
-
 # 🤖 AI-Governance-Platform
+
+<div align="center">
 
 ### Enterprise AI Governance Platform for Kubernetes
 
-**Zero Trust AI Infrastructure • AI FinOps • Supply Chain Security • Runtime Threat Detection**
+**AI FinOps • Supply Chain Security • Policy-as-Code • Runtime Threat Detection**
 
-<br>
-
+[![Tests](https://img.shields.io/badge/Tests-100%25%20Passing-brightgreen?style=for-the-badge)]()
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.31-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)]()
 [![Kyverno](https://img.shields.io/badge/Kyverno-v1.18-6E40C9?style=for-the-badge)]()
-[![Falco](https://img.shields.io/badge/Falco-eBPF_Runtime_Security-orange?style=for-the-badge)]()
-[![GPTCache](https://img.shields.io/badge/GPTCache-Semantic_Caching-success?style=for-the-badge)]()
-[![C2PA](https://img.shields.io/badge/C2PA-Model_Provenance-blue?style=for-the-badge)]()
-[![SLSA](https://img.shields.io/badge/SLSA-Level_3-purple?style=for-the-badge)]()
-[![Cosign](https://img.shields.io/badge/Cosign-Signed_Artifacts-darkgreen?style=for-the-badge)]()
-
-<br>
-
-[![Tests](https://img.shields.io/badge/Tests-100%25_Passing-brightgreen?style=for-the-badge)]()
-[![Platform Engineering](https://img.shields.io/badge/Platform-Engineering-orange?style=for-the-badge)]()
-[![DevSecOps](https://img.shields.io/badge/DevSecOps-Enabled-red?style=for-the-badge)]()
+[![Falco](https://img.shields.io/badge/Falco-Runtime%20Security-orange?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-MIT-success?style=for-the-badge)]()
 
-<br>
+---
 
-### 🔐 Secure by Default • 📜 Governed by Policy • 💰 Optimized by Design
+### Zero Trust Architecture for Generative AI Workloads
+
+*Secure by Default • Governed by Policy • Optimized by Design*
 
 </div>
 
 ---
 
-# 📖 Executive Summary
+## 📖 Executive Summary
 
-AI-Governance-Platform is a production-grade governance layer for Generative AI workloads running on Kubernetes.
+Generative AI workloads introduce challenges that traditional cloud-native platforms were not designed to address.
 
-The platform combines:
+This platform implements a complete governance layer for AI workloads running on Kubernetes, combining security, cost optimization, policy enforcement, model provenance validation and runtime threat detection.
 
-- **AI FinOps**
-- **Policy-as-Code**
-- **Supply Chain Security**
-- **Model Provenance Validation**
-- **Runtime Threat Detection**
-- **Transparent Performance Optimization**
+### Key Challenges
 
-into a single Zero Trust architecture designed for enterprise AI environments.
+- 💸 Uncontrolled GPU spending
+- 🔓 Model tampering and supply chain attacks
+- ⚠️ Lack of governance across teams
+- 🕵️ Runtime threats and privilege escalation
+- 📉 Limited visibility into AI infrastructure costs
 
----
+### Solution
 
-# 🎯 Business Problem
+AI-Governance-Platform automatically:
 
-Organizations adopting Generative AI frequently face:
-
-| Challenge | Impact |
-|------------|---------|
-| Uncontrolled GPU consumption | Infrastructure costs increase rapidly |
-| Lack of governance | Teams deploy workloads without standards |
-| Model tampering risks | Compromised models may reach production |
-| Runtime attacks | Containers can be abused after deployment |
-| Operational inefficiency | Repeated prompts waste GPU cycles |
-
-This platform addresses all these concerns using automated controls enforced directly inside Kubernetes.
+- Validates model provenance before execution
+- Enforces FinOps policies
+- Injects transparent optimization layers
+- Detects runtime threats using eBPF
+- Enables multi-tenant AI operations
 
 ---
 
-# 🏗️ High-Level Architecture
+## 🏗️ Architecture Overview
 
 ```text
-Dataset
-   │
-   ▼
-Model Training
-   │
-   ▼
-C2PA + Cosign + SLSA
-   │
-   ▼
-Registry / Object Storage
-   │
-   ▼
-Kyverno Admission Control
-   │
-   ├── FinOps Policies
-   ├── Resource Governance
-   ├── Sidecar Injection
-   └── Multi-Tenant Controls
-   │
-   ▼
-C2PA Validation (Init Container)
-   │
-   ▼
-vLLM Inference Runtime
-   │
-   ▼
-GPTCache Sidecar
-   │
-   ▼
-Falco + eBPF Monitoring
-   │
-   ▼
-Prometheus + Grafana
+┌────────────────────────────────────────────────────────────┐
+│                    MODEL TRAINING PIPELINE                │
+└────────────────────────────┬───────────────────────────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │ C2PA + COSIGN SIGN  │
+                  │ SLSA L3 ATTESTATION │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │ Registry / Storage  │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+┌────────────────────────────────────────────────────────────┐
+│          KYVERNO ADMISSION CONTROL (CEL)                  │
+│                                                            │
+│  ✓ FinOps Policies                                         │
+│  ✓ Resource Limits                                         │
+│  ✓ GPTCache Injection                                      │
+│  ✓ Multi-Tenant Governance                                 │
+└────────────────────────────┬───────────────────────────────┘
+                             │
+                             ▼
+┌────────────────────────────────────────────────────────────┐
+│            C2PA MODEL VALIDATION (INIT)                   │
+│                                                            │
+│  ✓ SHA-256 Verification                                    │
+│  ✓ Provenance Validation                                   │
+│  ✓ Zero Trust Admission                                    │
+└────────────────────────────┬───────────────────────────────┘
+                             │
+                             ▼
+┌────────────────────────────────────────────────────────────┐
+│                 INFERENCE WORKLOADS                       │
+│                                                            │
+│  vLLM + GPTCache                                           │
+│  GPU Governance                                            │
+│  Multi-Tenant Isolation                                    │
+└────────────────────────────┬───────────────────────────────┘
+                             │
+                             ▼
+┌────────────────────────────────────────────────────────────┐
+│            FALCO + eBPF RUNTIME SECURITY                  │
+│                                                            │
+│  ✓ Threat Detection                                        │
+│  ✓ Shell Monitoring                                        │
+│  ✓ Sensitive File Access                                   │
+│  ✓ Runtime Visibility                                      │
+└────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-# 🔐 Security Architecture
+## 🔐 Security Layers
 
-## Layer 1 — Supply Chain Security
+### Layer 1 — Supply Chain Security
 
-Before any model reaches production:
-
-✅ C2PA provenance validation
-
-✅ SHA-256 integrity verification
-
-✅ Cosign artifact signing
-
-✅ SLSA Level 3 attestations
-
-### Security Goal
-
-Ensure that only trusted and verifiable AI artifacts can be executed.
+| Control | Technology | Purpose |
+|----------|------------|----------|
+| Provenance | C2PA | Verify model origin |
+| Integrity | SHA-256 | Detect model tampering |
+| Signing | Cosign | Cryptographic trust |
+| Attestation | SLSA Level 3 | Pipeline provenance |
 
 ---
 
-## Layer 2 — Admission Governance
+### Layer 2 — Admission Governance
 
-Every deployment is intercepted before reaching the scheduler.
-
-### Kyverno Policies
-
-- FinOps enforcement
-- GPU governance
-- Resource limits validation
-- GPTCache automatic injection
-- Namespace governance
-- Multi-tenant isolation
-
-### Security Goal
-
-Prevent unsafe, expensive, or non-compliant workloads from being deployed.
+| Control | Technology | Purpose |
+|----------|------------|----------|
+| FinOps | Kyverno + CEL | GPU governance |
+| Limits | ValidatingPolicy | Resource enforcement |
+| Mutation | MutatingPolicy | GPTCache injection |
+| Isolation | NetworkPolicy | Multi-tenant security |
 
 ---
 
-## Layer 3 — Runtime Security
+### Layer 3 — Runtime Security
 
-After deployment, workloads remain continuously monitored.
+| Control | Technology | Purpose |
+|----------|------------|----------|
+| Runtime Detection | Falco | Threat detection |
+| Visibility | eBPF | Kernel telemetry |
+| Metrics | Prometheus | Monitoring |
+| Dashboards | Grafana | Operational insights |
 
-### Falco + eBPF
+---
 
-Detection capabilities:
+## 🚀 Core Capabilities
+
+### 💰 AI FinOps
+
+Policy-based governance for GPU workloads.
+
+**Examples**
+
+- Block premium GPUs in development
+- Enforce GPU limits
+- Control tenant quotas
+- Prevent resource abuse
+
+**Result**
+
+- Reduced infrastructure waste
+- Better GPU utilization
+- Predictable operational costs
+
+---
+
+### ⚡ Transparent Optimization
+
+Automatic GPTCache injection without application modifications.
+
+```text
+Deployment
+     │
+     ▼
+Kyverno detects vLLM
+     │
+     ▼
+Inject GPTCache Sidecar
+     │
+     ▼
+Cache Hit Rate ≈ 40-60%
+```
+
+**Benefits**
+
+- Lower latency
+- Reduced GPU consumption
+- Higher throughput
+
+---
+
+### 🔒 Zero Trust Model Validation
+
+Every model must prove its authenticity before execution.
+
+```text
+Model Request
+      │
+      ▼
+Download Manifest
+      │
+      ▼
+Calculate SHA-256
+      │
+      ▼
+Compare Hashes
+      │
+ ┌────┴────┐
+ │         │
+ ▼         ▼
+MATCH   MISMATCH
+ │         │
+ ▼         ▼
+ALLOW   BLOCK
+```
+
+---
+
+### 🛡️ Runtime Threat Detection
+
+Continuous monitoring of inference workloads.
+
+Detected events:
 
 - Unauthorized shell execution
-- Privilege escalation attempts
 - Sensitive file access
-- Container tampering
-- Suspicious process execution
-- Runtime anomaly detection
-
-### Security Goal
-
-Detect malicious behavior that occurs after deployment.
+- Privilege escalation attempts
+- Suspicious process spawning
+- Runtime tampering indicators
 
 ---
 
-# 💰 AI FinOps
+## 🧪 Security Validation
 
-## GPU Governance
+### FinOps Governance
 
-Example policy:
+Attempt:
 
-```yaml
-Environment: dev
-
-Allowed GPUs:
-  ≤ 4
-
-Premium GPUs:
-  Denied
+```bash
+kubectl apply -f workloads/abusive/inference-premium-dev.yaml
 ```
 
-### Benefits
-
-- Prevent accidental overspending
-- Improve resource allocation
-- Enforce platform standards
-
-### Validated Result
+Result:
 
 ```text
+DENY
+
 FinOps violation:
 dev/staging cannot request premium GPUs
 ```
 
 ---
 
-# ⚡ Transparent Optimization
+### GPTCache Injection
 
-The platform injects GPTCache automatically using Kyverno Mutating Policies.
+Command:
 
-```text
-Developer Deploys vLLM
-          │
-          ▼
-Kyverno Detects Workload
-          │
-          ▼
-Inject GPTCache Sidecar
-          │
-          ▼
-Caching Enabled Automatically
-```
-
-### Benefits
-
-- No application changes
-- Reduced GPU consumption
-- Lower latency
-- Improved throughput
-
-### Observed Savings
-
-| Metric | Result |
-|----------|---------|
-| Cache Hit Rate | ~45% |
-| Repeated Requests | 40–60% reduction |
-| GPU Utilization | Reduced |
-
----
-
-# 🛡️ Zero Trust Model Validation
-
-Every model must pass integrity validation before execution.
-
-## Legitimate Model
-
-```text
-Expected Hash == Calculated Hash
+```bash
+kubectl get deployment vllm-standard \
+-o jsonpath='{.spec.template.spec.containers[*].name}'
 ```
 
 Result:
 
 ```text
-Model verified
-Pod initialized
+vllm gptcache-sidecar
 ```
 
 ---
 
-## Tampered Model
+### Model Tampering Attack
+
+Attack Simulation:
 
 ```text
-Expected Hash != Calculated Hash
+Attacker replaces:
+model.safetensors
+
+Keeps:
+model.c2pa.json
+```
+
+Validator Output:
+
+```text
+Expected Hash:
+ca4e344857c6a8cb...
+
+Calculated Hash:
+318f846a64d6254b...
+
+FAIL:
+Model integrity violation detected
 ```
 
 Result:
@@ -263,103 +300,77 @@ Init:Error
 Pod never reaches runtime
 ```
 
-### Security Outcome
-
-✅ Supply chain attack blocked
-
-✅ Malicious model prevented from executing
+✅ Attack successfully blocked
 
 ---
 
-# 🚨 Runtime Threat Detection
+### Runtime Threat Detection
 
-Validated Falco scenarios:
-
-### Sensitive File Access
+Attack Simulation:
 
 ```bash
 cat /etc/shadow
 ```
 
-Alert:
+Falco Alert:
 
 ```text
-Sensitive file opened for reading
-Process: cat
+Sensitive file opened for reading by non-trusted process
+
 File: /etc/shadow
+Process: cat
 Namespace: team-mlops
 ```
 
----
-
-### Container Tampering
-
-```text
-Unexpected file modification
-```
-
-Alert generated automatically.
+✅ Runtime threat detected
 
 ---
 
-### Suspicious Process Execution
-
-```text
-Shell execution inside inference workload
-```
-
-Alert generated automatically.
-
----
-
-# 📊 Platform Capabilities
+## 📊 Validated Outcomes
 
 | Capability | Status |
 |------------|---------|
 | AI FinOps | ✅ |
-| Policy-as-Code | ✅ |
 | GPTCache Injection | ✅ |
-| Supply Chain Security | ✅ |
-| C2PA Validation | ✅ |
-| SLSA Attestations | ✅ |
-| Cosign Signing | ✅ |
-| Runtime Security | ✅ |
-| eBPF Monitoring | ✅ |
 | Multi-Tenant Governance | ✅ |
+| Model Provenance Validation | ✅ |
+| Runtime Threat Detection | ✅ |
+| Supply Chain Security | ✅ |
+| Zero Trust Admission | ✅ |
 
 ---
 
-# 🛠️ Technology Stack
+## 🛠️ Technology Stack
 
-## Platform
+### Platform
 
 - Kubernetes 1.31
 - Kind
 - Docker
 
-## Governance
+### Governance
 
 - Kyverno 1.18
 - CEL Policies
 
-## AI Runtime
+### AI Inference
 
 - vLLM
 - GPTCache
 - Redis
 
-## Supply Chain Security
+### Supply Chain Security
 
 - C2PA
 - Cosign
 - SLSA Level 3
 
-## Runtime Security
+### Runtime Security
 
 - Falco
 - eBPF
 
-## Observability
+### Observability
 
 - Prometheus
 - Grafana
@@ -367,46 +378,37 @@ Alert generated automatically.
 
 ---
 
-# 🏆 Key Outcomes
+## 🎯 Business Outcomes
 
-### Security
-
-- Zero Trust AI deployment
-- Provenance verification
-- Runtime threat detection
-
-### Cost Optimization
-
-- GPU governance
-- Automatic caching
-- Resource quota enforcement
-
-### Platform Engineering
-
-- Policy-as-Code
-- Multi-tenant architecture
-- Self-service AI infrastructure
+- Secure AI workloads by default
+- Enforce governance automatically
+- Reduce inference costs
+- Detect runtime threats
+- Enable multi-tenant AI operations
+- Establish Zero Trust AI infrastructure
 
 ---
 
-# 🚀 Future Roadmap
+## 🏆 Highlights
 
-- [ ] OPA Gatekeeper integration
-- [ ] CycloneDX Model SBOM
-- [ ] Compliance Dashboard
-- [ ] EU AI Act Mapping
-- [ ] Automated Risk Scoring
-- [ ] AI Security Posture Dashboard
+- ✅ Policy-as-Code with Kyverno + CEL
+- ✅ AI FinOps Governance
+- ✅ GPTCache Sidecar Injection
+- ✅ C2PA Model Provenance Validation
+- ✅ SLSA Level 3 Attestation
+- ✅ Cosign Image Signing
+- ✅ Falco Runtime Security
+- ✅ eBPF Threat Visibility
+- ✅ Multi-Tenant Kubernetes Architecture
 
 ---
 
 <div align="center">
 
-# 🌟 Platform Engineering for AI
+# Platform Engineering for AI
 
-### Building Secure, Governed and Cost-Efficient AI Infrastructure
+### Secure by Default • Governed by Policy • Optimized by Design
 
-**Zero Trust • AI FinOps • Supply Chain Security • Runtime Security**
+**Zero Trust AI Infrastructure**
 
 </div>
-````
