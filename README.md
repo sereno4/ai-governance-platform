@@ -49,63 +49,68 @@ AI-Governance-Platform automatically:
 ---
 
 ## 🏗️ Architecture Overview
-
-```text
-┌────────────────────────────────────────────────────────────┐
-│                    MODEL TRAINING PIPELINE                │
-└────────────────────────────┬───────────────────────────────┘
-                             │
-                             ▼
-                  ┌─────────────────────┐
-                  │ C2PA + COSIGN SIGN  │
-                  │ SLSA L3 ATTESTATION │
-                  └──────────┬──────────┘
-                             │
-                             ▼
-                  ┌─────────────────────┐
-                  │ Registry / Storage  │
-                  └──────────┬──────────┘
-                             │
-                             ▼
-┌────────────────────────────────────────────────────────────┐
-│          KYVERNO ADMISSION CONTROL (CEL)                  │
-│                                                            │
-│  ✓ FinOps Policies                                         │
-│  ✓ Resource Limits                                         │
-│  ✓ GPTCache Injection                                      │
-│  ✓ Multi-Tenant Governance                                 │
-└────────────────────────────┬───────────────────────────────┘
-                             │
-                             ▼
-┌────────────────────────────────────────────────────────────┐
-│            C2PA MODEL VALIDATION (INIT)                   │
-│                                                            │
-│  ✓ SHA-256 Verification                                    │
-│  ✓ Provenance Validation                                   │
-│  ✓ Zero Trust Admission                                    │
-└────────────────────────────┬───────────────────────────────┘
-                             │
-                             ▼
-┌────────────────────────────────────────────────────────────┐
-│                 INFERENCE WORKLOADS                       │
-│                                                            │
-│  vLLM + GPTCache                                           │
-│  GPU Governance                                            │
-│  Multi-Tenant Isolation                                    │
-└────────────────────────────┬───────────────────────────────┘
-                             │
-                             ▼
-┌────────────────────────────────────────────────────────────┐
-│            FALCO + eBPF RUNTIME SECURITY                  │
-│                                                            │
-│  ✓ Threat Detection                                        │
-│  ✓ Shell Monitoring                                        │
-│  ✓ Sensitive File Access                                   │
-│  ✓ Runtime Visibility                                      │
-└────────────────────────────────────────────────────────────┘
-```
-
+```mermaid
 ---
+config:
+  layout: elk
+---
+flowchart TB
+
+    TRAIN["🧠 Model Training Pipeline"]
+
+    subgraph SUPPLY["🔐 Supply Chain Security"]
+        SIGN["C2PA + Cosign Signing"]
+        SLSA["SLSA Level 3 Attestation"]
+        REG["Registry / Model Storage"]
+    end
+
+    subgraph ADMISSION["🛡️ Kyverno Admission Control"]
+        FIN["FinOps Policies"]
+        LIMITS["Resource Limits"]
+        CACHE["GPTCache Injection"]
+        TENANT["Multi-Tenant Governance"]
+    end
+
+    subgraph VALIDATION["✅ Model Validation"]
+        SHA["SHA-256 Verification"]
+        PROV["Provenance Validation"]
+        ZT["Zero Trust Admission"]
+    end
+
+    subgraph INFERENCE["🚀 Inference Platform"]
+        VLLM["vLLM"]
+        GPTCACHE["GPTCache"]
+        GPU["GPU Governance"]
+        ISO["Tenant Isolation"]
+    end
+
+    subgraph RUNTIME["🔍 Runtime Security"]
+        FALCO["Falco"]
+        EBPF["eBPF Monitoring"]
+        SHELL["Shell Detection"]
+        FILES["Sensitive File Monitoring"]
+    end
+
+    TRAIN --> SIGN
+    SIGN --> SLSA
+    SLSA --> REG
+
+    REG --> ADMISSION
+
+    ADMISSION --> VALIDATION
+
+    VALIDATION --> INFERENCE
+
+    INFERENCE --> RUNTIME
+
+    classDef security fill:#eef2ff,stroke:#6366f1
+    classDef governance fill:#f0fdf4,stroke:#16a34a
+    classDef runtime fill:#fff7ed,stroke:#ea580c
+
+    class SIGN,SLSA,SHA,PROV,ZT security
+    class FIN,LIMITS,CACHE,TENANT,GPU,ISO governance
+    class FALCO,EBPF,SHELL,FILES runtime
+```
 
 ## 🔐 Security Layers
 
